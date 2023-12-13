@@ -32,29 +32,37 @@ module.exports = {
     },
 
     addTask: async (req, res) => {
-
         const erros = validationResult(req);
-
+    
         if (!erros.isEmpty()) {
             res.json({
                 error: erros.mapped()
-            })
-            return
+            });
+            return;
         }
-
+    
         const data = matchedData(req);
-
-        const newTask = new Task();
-
-        newTask.titulo = data.titulo;
-        newTask.descricao = data.descricao;
-        newTask.status = data.status;
-        newTask.prioridade = data.prioridade;
-
-        const info = await newTask.save();
-        res.json({ info })
-
-
+    
+        const newTask = new Task({
+            titulo: data.titulo,
+            descricao: data.descricao,
+            status: data.status,
+            prioridade: data.prioridade,
+            
+            impedimento: {
+                temImpedimento: req.body.impedimento && req.body.impedimento.temImpedimento,
+                motivo: req.body.impedimento && req.body.impedimento.motivo,
+                descricaoDetalhada: req.body.impedimento && req.body.impedimento.descricaoDetalhada
+            }
+        });
+    
+        try {
+            const info = await newTask.save();
+            res.json({ info });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ msg: "Erro ao adicionar a tarefa" });
+        }
     },
 
     editTask: async (req, res) => {
@@ -70,6 +78,11 @@ module.exports = {
             tarefa.descricao = req.body.descricao || tarefa.descricao;
             tarefa.status = req.body.status || tarefa.status;
             tarefa.prioridade = req.body.prioridade || tarefa.prioridade;
+
+            tarefa.impedimento.temImpedimento = req.body.impedimento && req.body.impedimento.temImpedimento;
+            tarefa.impedimento.motivo = req.body.impedimento && req.body.impedimento.motivo;
+            tarefa.impedimento.descricaoDetalhada = req.body.impedimento && req.body.impedimento.descricaoDetalhada;
+
 
             await tarefa.save();
 
